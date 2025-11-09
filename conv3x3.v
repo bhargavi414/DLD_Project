@@ -50,43 +50,62 @@ module conv3x3 #(
         end
     endfunction
     
+    // Add states for FSM
+    localparam IDLE = 2'b00;
+    localparam LOAD = 2'b01;
+    localparam COMPUTE = 2'b10;
+    localparam STORE = 2'b11;
+    
+    reg [1:0] state;
+    
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             row_cnt <= 0;
             col_cnt <= 0;
             filtered_matrix <= 0;
             done <= 0;
-        end else if (!done) begin
-            // Extract pixels for current window
-            I00 <= pixel(row_cnt, col_cnt);
-            I01 <= pixel(row_cnt, col_cnt + 1);
-            I02 <= pixel(row_cnt, col_cnt + 2);
-            I10 <= pixel(row_cnt + 1, col_cnt);
-            I11 <= pixel(row_cnt + 1, col_cnt + 1);
-            I12 <= pixel(row_cnt + 1, col_cnt + 2);
-            I20 <= pixel(row_cnt + 2, col_cnt);
-            I21 <= pixel(row_cnt + 2, col_cnt + 1);
-            I22 <= pixel(row_cnt + 2, col_cnt + 2);
-            
-            
-            // Register MAC output
-            //Y_reg <= Y;
-
-            // Store result in output matrix
-            filtered_matrix[(((row_cnt*(cols-2)) + col_cnt)*total_bits) +: total_bits] = Y;
-            // Update counters
-            if (col_cnt < cols - 3)
-                col_cnt <= col_cnt + 1;
-            else begin
-                col_cnt <= 0;
-                if (row_cnt <rows - 3)
-                    row_cnt <= row_cnt + 1;
-                else
-                    done <= 1;  //convolution finished
-            end
+            state <= IDLE;
+        end else begin
+            case (state)
+                IDLE: begin
+                    if (!done)
+                        state <= LOAD;
+                end
+                
+                LOAD: begin
+                    I00 <= pixel(row_cnt, col_cnt);
+                    I01 <= pixel(row_cnt, col_cnt + 1);
+                    I02 <= pixel(row_cnt, col_cnt + 2);
+                    I10 <= pixel(row_cnt + 1, col_cnt);
+                    I11 <= pixel(row_cnt + 1, col_cnt + 1);
+                    I12 <= pixel(row_cnt + 1, col_cnt + 2);
+                    I20 <= pixel(row_cnt + 2, col_cnt);
+                    I21 <= pixel(row_cnt + 2, col_cnt + 1);
+                    I22 <= pixel(row_cnt + 2, col_cnt + 2);
+                    state <= COMPUTE;
+                end
+                
+                COMPUTE: begin
+                    state <= STORE;
+                end
+                
+                STORE: begin
+                    filtered_matrix[(((row_cnt*(cols-2)) + col_cnt)*total_bits) +: total_bits] <= Y;
+                    if (col_cnt < cols - 3) begin
+                        col_cnt <= col_cnt + 1;
+                        state <= LOAD;
+                    end else if (row_cnt < rows - 3) begin
+                        col_cnt <= 0;
+                        row_cnt <= row_cnt + 1;
+                        state <= LOAD;
+                    end else begin
+                        done <= 1;
+                        state <= IDLE;
+                    end
+                end
+            endcase
         end
     end
-
 endmodule
 
 
