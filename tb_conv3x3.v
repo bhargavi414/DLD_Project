@@ -44,15 +44,15 @@ module tb_conv3x3;
   real temp_float;
 
   initial begin
-
     // Reset DUT
-    rst = 1;
+    rst = 1; 
     #15;
     rst = 0;
 
     // Test Case 1
     rows = 4;
     cols = 4;
+    //vertical stripes input image matrix
     matrix_data = {
       16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,
       16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,16'd0,
@@ -63,18 +63,19 @@ module tb_conv3x3;
       16'd0,16'd0,16'd0,16'd0,16'd256,16'd0,16'd256,16'd0,
       16'd0,16'd0,16'd0,16'd0,16'd256,16'd0,16'd256,16'd0
     };
-
+  //scaled 3x3 blur kernel
     K00 = 16'd28; K01 = 16'd28; K02 = 16'd28;
     K10 = 16'd28; K11 = 16'd28; K12 = 16'd28;
     K20 = 16'd28; K21 = 16'd28; K22 = 16'd28;
 
-    wait(done);
+    wait(done); //wait until done==1 (until operation is complete)
     #10;
+
     $display("Filtered output for 4x4 stripes:");
     for (r = 0; r < rows-2; r = r + 1) begin
       for (c = 0; c < cols-2; c = c + 1) begin
           temp = filtered_matrix[((r*(cols-2)) + c)*total_bits +: total_bits];
-          temp_float = $itor(temp) / 256.0;
+          temp_float = $itor(temp) / 256.0; //obtaining decimal form from Q8.8
           $write("%0.3f ", temp_float);
       end
       $write("\n");
@@ -88,6 +89,7 @@ module tb_conv3x3;
     //Test Case 2
     rows = 8;
     cols = 8;
+    //8x8 checkboard input image matrix
     matrix_data = {
       16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,
       16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,
@@ -98,7 +100,7 @@ module tb_conv3x3;
       16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,
       16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256
     };
-
+  //3x3 scaled blur kernel
     K00 = 16'd28; K01 = 16'd28; K02 = 16'd28;
     K10 = 16'd28; K11 = 16'd28; K12 = 16'd28;
     K20 = 16'd28; K21 = 16'd28; K22 = 16'd28;
@@ -123,6 +125,7 @@ module tb_conv3x3;
     //Test Case 3
     rows = 8;
     cols = 8;
+    //8x8 checkboard matrix
     matrix_data = {
       16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,
       16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,
@@ -133,7 +136,7 @@ module tb_conv3x3;
       16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,
       16'd0,16'd256,16'd0,16'd256,16'd0,16'd256,16'd0,16'd256
     };
-
+  //3x3 edge detection matrix
     K00 = -16'd256; K01 = -16'd256; K02 = -16'd256;
     K10 = -16'd256; K11 = 16'd2048; K12 = -16'd256;
     K20 = -16'd256; K21 = -16'd256; K22 = -16'd256;
